@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Калькулятор кредита</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f4f6fa;
+    color: #1f2933;
+    padding: 24px;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 26px;
+    margin-bottom: 20px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    margin-bottom: 20px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 6px;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 15px;
+    background: #f9fafb;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+  }
+  input.warn {
+    border-color: #dc2626;
+    background: #fef2f2;
+  }
+  input.warn:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220,38,38,.15);
+  }
+  .field-hint {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 6px;
+  }
+  .field-hint.warn {
+    color: #dc2626;
+    font-weight: 600;
+  }
+
+  button {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
+  }
+  button.primary {
+    background: #2563eb;
+  }
+  button.primary:hover { background: #1d4ed8; }
+  button.danger {
+    background: transparent;
+    color: #dc2626;
+    border: 1px solid #dc2626;
+  }
+  button.danger:hover { background: #fecaca; }
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .summary-item {
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .summary-item .value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+  }
+  .summary-item .caption {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  h2 { font-size: 18px; margin-bottom: 14px; }
+
+  .early-list { margin-bottom: 10px; }
+  .early-row {
+    display: grid;
+    grid-template-columns: 90px 150px 1fr 40px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .early-row .sep { color: #9ca3af; }
+  .early-head {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 2px;
+  }
+
+  .table-wrap { max-height: 460px; overflow: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  th, td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: right;
+  }
+  th {
+    position: sticky;
+    top: 0;
+    background: #f3f4f6;
+    color: #374151;
+    font-weight: 600;
+    z-index: 1;
+  }
+  td:first-child { text-align: center; }
+  tr.early td { background: #eff6ff; }
+  tr.total td { background: #eef2f7; font-weight: 700; border-top: 2px solid #cbd5e1; }
+
+  .hint { font-size: 12.5px; color: #6b7280; }
+  .bar {
+    display: inline-block;
+    height: 9px;
+    border-radius: 5px;
+    width: 100%;
+    background: #fff;
+    position: relative;
+  }
+  .bar .principal, .bar .interest {
+    height: 9px;
+    border-radius: 5px 0 0 5px;
+  }
+  .bar .principal { background: #2563eb; }
+  .bar .interest  { background: #f59e0b; }
+  .bar-label {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 12px;
+    vertical-align: middle;
+  }
+
+  .legend { font-size: 12.5px; margin-top: 8px; }
+  .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; }
+  .legend .dot.blue { background: #2563eb; }
+  .legend .dot.amber { background: #f59e0b; }
+
+  .btn-row { margin-top: 12px; }
+  .chart { margin-top: 12px; }
+
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+    .early-row { grid-template-columns: 1fr 1fr; }
+    .early-row select { grid-column: 1 / 3; }
+    .early-row .btn-row { margin-top: 0; }
+    h1 { font-size: 21px; }
+    body { padding: 12px; }
+    .table-wrap { max-height: 380px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Калькулятор остатка платежей по кредиту</h1>
+
+  <div class="card">
+    <div class="grid">
+      <div class="field">
+        <label for="amount">Стоимость/сумма кредита, ₽</label>
+        <input id="amount" type="text" inputmode="decimal" value="1&nbsp;500&nbsp;000">
+      </div>
+      <div class="field">
+        <label for="down">Первоначальный взнос, ₽</label>
+        <input id="down" type="text" inputmode="decimal" value="300&nbsp;000">
+        <div class="field-hint" id="downHint"></div>
+      </div>
+      <div class="field">
+        <label for="rate">Процентная ставка, % годовых</label>
+        <input id="rate" type="text" inputmode="decimal" value="18">
+      </div>
+      <div class="field">
+        <label for="term">Срок, лет</label>
+        <input id="term" type="text" inputmode="numeric" value="5">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Досрочные погашения</h2>
+    <p class="hint" style="margin-bottom:12px">Указывайте номер месяца от начала кредита (1 = первый платёж).</p>
+    <div class="early-list" id="earlyList"></div>
+    <div class="btn-row">
+      <button class="primary" id="addEarly">+ Добавить досрочное погашение</button>
+      <button class="primary" id="recalc" style="margin-left:10px">Пересчитать</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Итоги</h2>
+    <div class="summary" id="summary"></div>
+  </div>
+
+  <div class="card">
+    <h2>График платежей</h2>
+    <div class="legend">
+      <span><span class="dot blue"></span>Тело кредита (основной долг)</span>
+      <span style="margin-left:16px"><span class="dot amber"></span>Проценты</span>
+    </div>
+    <div class="chart" id="chart"></div>
+  </div>
+
+  <div class="card">
+    <h2>График помесячно</h2>
+    <div class="table-wrap">
+      <table id="schedule"></table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var earlyList = document.getElementById("earlyList");
+  var addBtn = document.getElementById("addEarly");
+  var recalcBtn = document.getElementById("recalc");
+
+  var earlyPayments = []; // { month, amount, type: 'term' | 'payment' }
+  var MIN_DOWN_PCT = 20.1;
+
+  function fmt(n, withSign) {
+    if (typeof n !== "number" || isNaN(n)) return "—";
+    var sign = "";
+    if (n < 0) sign = "-";
+    else if (withSign && n > 0) sign = "+";
+    var s = String(Math.round(Math.abs(n)));
+    s = s.replace(/\B(?=(\d{3})+(?!\d))/g, "\u00A0");
+    return sign + s;
+  }
+
+  function money(n) { return fmt(n, false) + " ₽"; }
+
+  function fmtPct(n) {
+    return String(Math.round(n * 10) / 10).replace(".", ",");
+  }
+
+  function parseNum(s) {
+    s = String(s).replace(/[\s\u00A0]/g, "").replace(",", ".");
+    var v = parseFloat(s);
+    return isNaN(v) ? 0 : v;
+  }
+
+  function fmtInputVal(raw) {
+    var s = String(raw).replace(/[\s\u00A0]/g, "").replace(",", ".");
+    s = s.replace(/[^\d.]/g, "");
+    var dot = s.indexOf(".");
+    if (dot >= 0) s = s.slice(0, dot + 1) + s.slice(dot + 1).replace(/\./g, "");
+    var parts = s.split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, "\u00A0");
+    return parts.join(".");
+  }
+
+  function fmtTerm(months) {
+    var y = Math.floor(months / 12);
+    var m = months % 12;
+    if (y > 0 && m > 0) return y + " г. " + m + " мес.";
+    if (y > 0) return y + " лет";
+    return m + " мес.";
+  }
+
+  function minTwo(a, b) { return Math.min(a, b); }
+
+  function annuityPayment(P, r, n) {
+    if (n <= 0) return 0;
+    if (r === 0) return P / n;
+    var factor = Math.pow(1 + r, n);
+    return P * r * factor / (factor - 1);
+  }
+
+  function buildSchedule(principal, annualRate, months, early) {
+    var r = annualRate / 100 / 12;
+    var payment = annuityPayment(principal, r, months);
+    var rows = [];
+    var balance = principal;
+    var totalPrincipal = 0, totalInterest = 0;
+
+    var sortedEarly = early.slice().sort(function (a, b) { return a.month - b.month; });
+
+    for (var m = 1; m <= months && balance > 0.005; m++) {
+      var isEarly = false;
+      var earlySum = 0;
+      var effTypes = [];
+      for (var i = 0; i < sortedEarly.length; i++) {
+        if (sortedEarly[i].month === m) {
+          isEarly = true;
+          earlySum += sortedEarly[i].amount;
+          effTypes.push(sortedEarly[i].type);
+        }
+      }
+
+      var interest = balance * r;
+      var principalPart = payment - interest;
+
+      if (principalPart >= balance) {
+        principalPart = balance;
+        payment = balance + interest;
+      }
+
+      balance -= principalPart;
+      totalPrincipal += principalPart;
+      totalInterest += interest;
+
+      var paidPayment = payment;
+      var earlyPaidNow = 0;
+      if (isEarly) {
+        var payable = Math.min(earlySum, Math.max(balance, 0));
+        balance -= payable;
+        earlyPaidNow = payable;
+        totalPrincipal += payable;
+
+        // пересчёт после досрочного погашения
+        if (balance > 0.005 && m < months) {
+          var remaining = months - m;
+          if (effTypes.indexOf("payment") >= 0) {
+            payment = annuityPayment(balance, r, remaining);
+          } else {
+            // уменьшение срока: платёж тот же, пересчитываем применимый срок
+            var p = balance, rr = r, q = payment;
+            var newN = 0;
+            for (var k = 1; k <= remaining; k++) {
+              var ii = p * rr;
+              var pp = q - ii;
+              if (pp <= 0) break;
+              p -= pp;
+              newN = k;
+              if (p <= 0.005) break;
+            }
+            if (newN > 0) months = m + newN;
+          }
+        }
+      }
+
+      rows.push({
+        month: m,
+        balance: balance,
+        payment: paidPayment,
+        principal: principalPart,
+        interest: interest,
+        early: isEarly ? earlySum : 0,
+        earlyPaid: isEarly ? earlyPaidNow : 0,
+        isEarly: isEarly
+      });
+    }
+
+    return {
+      rows: rows,
+      totalPrincipal: totalPrincipal,
+      totalInterest: totalInterest,
+      firstPayment: rows.length > 0 ? rows[0].payment : payment,
+      fullPaymentTotal: totalPrincipal + totalInterest
+    };
+  }
+
+  function calc() {
+    var amount = Math.max(parseNum(document.getElementById("amount").value), 0);
+    var down = Math.max(parseNum(document.getElementById("down").value), 0);
+    var rate = Math.max(parseNum(document.getElementById("rate").value), 0);
+    var years = Math.floor(parseNum(document.getElementById("term").value)) || 1;
+    if (years < 1) years = 1;
+    var months = years * 12;
+
+    var principal = Math.max(amount - down, 0);
+
+    var downPct = amount > 0 ? down / amount * 100 : 0;
+    var downPctRounded = Math.round(downPct * 10) / 10;
+    var isLowDown = amount > 0 && downPctRounded < MIN_DOWN_PCT;
+    var downInput = document.getElementById("down");
+    var downHint = document.getElementById("downHint");
+    downInput.className = isLowDown ? "warn" : "";
+    if (amount > 0) {
+      downHint.textContent = fmtPct(downPct) + "% от стоимости" + (isLowDown ? " — меньше " + fmtPct(MIN_DOWN_PCT) + "%" : "");
+      downHint.className = isLowDown ? "field-hint warn" : "field-hint";
+    } else {
+      downHint.textContent = "";
+      downHint.className = "field-hint";
+    }
+
+    var res = buildSchedule(principal, rate, months, earlyPayments);
+
+    var last = res.rows[res.rows.length - 1];
+    var overpay = res.totalInterest;
+
+    var summary = document.getElementById("summary");
+    summary.innerHTML =
+      '<div class="summary-item"><div class="value">' + fmt(amount) + ' ₽</div><div class="caption">Стоимость</div></div>' +
+      '<div class="summary-item"><div class="value">' + fmt(down) + ' ₽</div><div class="caption">Первоначальный взнос (' + fmtPct(downPct) + '%)</div></div>' +
+      '<div class="summary-item"><div class="value">' + fmt(principal) + ' ₽</div><div class="caption">Сумма кредита</div></div>' +
+      '<div class="summary-item"><div class="value">' + fmt(res.firstPayment) + ' ₽</div><div class="caption">Ежемесячный платёж</div></div>' +
+      '<div class="summary-item"><div class="value">' + fmtTerm(res.rows.length) + '</div><div class="caption">Срок платежей</div></div>' +
+      '<div class="summary-item"><div class="value">' + fmt(overpay) + ' ₽</div><div class="caption">Переплата (проценты)</div></div>' +
+      '<div class="summary-item"><div class="value">' + fmt(res.totalPrincipal) + ' ₽</div><div class="caption">Выплачено тела</div></div>' +
+      '<div class="summary-item"><div class="value">' + fmt(res.fullPaymentTotal) + ' ₽</div><div class="caption">Итого выплат</div></div>';
+
+    renderChart(res);
+    renderTable(res, months);
+  }
+
+  function renderChart(res) {
+    var chart = document.getElementById("chart");
+    var rows = res.rows;
+    var max = res.firstPayment || 1;
+    var html = "";
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var w = (row.payment / max) * 100;
+      var pShare = row.payment > 0 ? (row.principal / row.payment) * 100 : 0;
+      var iShare = row.payment > 0 ? (row.interest / row.payment) * 100 : 0;
+      html +=
+        '<div style="display:flex;align-items:center;margin-bottom:3px">' +
+          '<span style="width:44px;font-size:12px;color:#6b7280">' + row.month + '</span>' +
+          '<div class="bar" style="width:' + Math.min(w, 100) + '%;max-width:100%">' +
+            '<div style="position:relative;height:9px;display:flex">' +
+              '<div class="principal" style="width:' + pShare + '%"></div>' +
+              '<div class="interest" style="width:' + iShare + '%"></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }
+    chart.innerHTML = html;
+  }
+
+  function renderTable(res, totalMonths) {
+    var table = document.getElementById("schedule");
+    var rows = res.rows;
+    var html =
+      '<tr>' +
+        '<th>№</th>' +
+        '<th>Платёж</th>' +
+        '<th>Тело</th>' +
+        '<th>Проценты</th>' +
+        '<th>Досрочно</th>' +
+        '<th>Остаток</th>' +
+      '</tr>';
+
+    var sumPayment = 0, sumPrincipal = 0, sumInterest = 0, sumEarly = 0;
+
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      sumPayment += row.payment;
+      sumPrincipal += row.principal;
+      sumInterest += row.interest;
+      sumEarly += row.earlyPaid;
+
+      var cls = row.isEarly ? ' class="early"' : "";
+      html +=
+        '<tr' + cls + '>' +
+          '<td>' + (row.month) + '</td>' +
+          '<td>' + fmt(row.payment) + '</td>' +
+          '<td>' + fmt(row.principal) + '</td>' +
+          '<td>' + fmt(row.interest) + '</td>' +
+          '<td>' + (row.earlyPaid > 0 ? fmt(row.earlyPaid) : "—") + '</td>' +
+          '<td>' + fmt(row.balance) + '</td>' +
+        '</tr>';
+    }
+
+    html +=
+      '<tr class="total">' +
+        '<td>Итого</td>' +
+        '<td>' + fmt(sumPayment) + '</td>' +
+        '<td>' + fmt(sumPrincipal) + '</td>' +
+        '<td>' + fmt(sumInterest) + '</td>' +
+        '<td>' + fmt(sumEarly) + '</td>' +
+        '<td></td>' +
+      '</tr>';
+
+    table.innerHTML = html;
+  }
+
+  function renderEarlyList() {
+    var html = "";
+    var delIds = [];
+    if (earlyPayments.length > 0) {
+      html +=
+        '<div class="early-row early-head">' +
+          '<div>Месяц (№ от начала)</div>' +
+          '<div>Сумма, ₽</div>' +
+          '<div>Стратегия</div>' +
+          '<div></div>' +
+        '</div>';
+    }
+    for (var i = 0; i < earlyPayments.length; i++) {
+      var e = earlyPayments[i];
+      html +=
+        '<div class="early-row" data-root="' + i + '">' +
+          '<input type="text" inputmode="numeric" value="' + e.month + '" placeholder="№ месяца" aria-label="Месяц платежа" data-idx="' + i + '" data-key="month">' +
+          '<input type="text" inputmode="decimal" value="' + fmtInputVal(String(e.amount)) + '" placeholder="Сумма" aria-label="Сумма платежа" data-idx="' + i + '" data-key="amount">' +
+          '<select data-idx="' + i + '" data-key="type">' +
+            '<option value="term" ' + (e.type === "term" ? "selected" : "") + '>Уменьшить срок</option>' +
+            '<option value="payment" ' + (e.type === "payment" ? "selected" : "") + '>Уменьшить платёж</option>' +
+          '</select>' +
+          '<button class="danger" data-del="' + i + '" title="Удалить">×</button>' +
+        '</div>';
+    }
+    earlyList.innerHTML = html;
+    delIds = [].slice.call(earlyList.querySelectorAll("button[data-del]"));
+
+    var inputs = [].slice.call(earlyList.querySelectorAll("input, select"));
+    for (var i = 0; i < inputs.length; i++) {
+      var el = inputs[i];
+      if (el.tagName === "SELECT") {
+        el.onchange = function () {
+          earlyPayments[parseInt(this.dataset.idx, 10)].type = this.value;
+          calc();
+        };
+      } else {
+        el.oninput = function () {
+          this.value = fmtInputVal(this.value);
+          var idx = parseInt(this.dataset.idx, 10);
+          var key = this.dataset.key;
+          var val = parseNum(this.value);
+          if (key === "month") val = Math.max(parseInt(val, 10) || 1, 1);
+          else val = Math.max(val, 0);
+          earlyPayments[idx][key] = val;
+          calc();
+        };
+      }
+    }
+    for (var i = 0; i < delIds.length; i++) {
+      delIds[i].onclick = function () {
+        earlyPayments.splice(parseInt(this.dataset.del, 10), 1);
+        renderEarlyList();
+        calc();
+      };
+    }
+  }
+
+  addBtn.onclick = function () {
+    earlyPayments.push({ month: 1, amount: 50000, type: "term" });
+    renderEarlyList();
+    calc();
+  };
+
+  recalcBtn.onclick = calc;
+
+  var mainInputs = ["amount", "down", "rate", "term"];
+  var inputs = [];
+  for (var i = 0; i < mainInputs.length; i++) {
+    inputs.push(document.getElementById(mainInputs[i]));
+  }
+  for (var i = 0; i < inputs.length; i++) {
+    inputs[i].oninput = function () {
+      this.value = fmtInputVal(this.value);
+      calc();
+    };
+  }
+
+  renderEarlyList();
+  calc();
+})();
+</script>
+</body>
+</html>
